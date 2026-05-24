@@ -33,6 +33,90 @@ public class AvailabilityServiceImpl
     }
 
     @Override
+    public Map<String, Object> getAvailabilityByDate(
+            LocalDate date
+    ) {
+
+        if (date == null) {
+
+            throw new RuntimeException(
+                    "La fecha es obligatoria"
+            );
+        }
+
+        List<TimeRange> ranges =
+                getAvailableRanges(date);
+
+        List<String> availableSlots =
+                new ArrayList<>();
+
+        // GENERAR TODOS LOS SLOTS DISPONIBLES
+        for (TimeRange range : ranges) {
+
+            LocalTime current =
+                    range.startTime();
+
+            while (
+                    current.isBefore(range.endTime())
+            ) {
+
+                availableSlots.add(
+                        current.toString()
+                );
+
+                current =
+                        current.plusMinutes(30);
+            }
+        }
+
+        // RESERVAS OCUPADAS
+        List<Reservation> reservations =
+                reservationRepository
+                        .findByReservationDate(date);
+
+        List<String> occupiedSlots =
+                new ArrayList<>();
+
+        for (Reservation reservation
+                : reservations) {
+
+            boolean activeReservation =
+                    reservation.getStatus()
+                            == ReservationStatus.PENDING
+                            ||
+                            reservation.getStatus()
+                                    == ReservationStatus.CONFIRMED;
+
+            if (!activeReservation) {
+
+                continue;
+            }
+
+            occupiedSlots.add(
+                    reservation.getStartTime().toString()
+            );
+        }
+
+        // ELIMINAR OCUPADOS DE DISPONIBLES
+        availableSlots.removeAll(occupiedSlots);
+
+        Map<String, Object> response =
+                new HashMap<>();
+
+        response.put(
+                "availableSlots",
+                availableSlots
+        );
+
+        response.put(
+                "occupiedSlots",
+                occupiedSlots
+        );
+
+        return response;
+    }
+
+    @Override
     public List<LocalTime> generateAvailableSlots(
             LocalDate date,
             Long serviId

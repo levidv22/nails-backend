@@ -16,19 +16,13 @@ public class DashboardController {
 
     private final ReservationService reservationService;
     private final ServiService serviService;
-    private final LoyaltyService loyaltyService;
-    private final UserService userService;
 
     public DashboardController(
             ReservationService reservationService,
-            ServiService serviService,
-            LoyaltyService loyaltyService,
-            UserService userService
+            ServiService serviService
     ) {
         this.reservationService = reservationService;
         this.serviService = serviService;
-        this.loyaltyService = loyaltyService;
-        this.userService = userService;
     }
 
     @GetMapping(path = "/summary")
