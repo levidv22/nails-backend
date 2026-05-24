@@ -50,18 +50,13 @@ public class AvailabilityController {
         return ResponseEntity.ok(available);
     }
 
-    @GetMapping(path = "/occupied")
-    public ResponseEntity<List<Reservation>> getOccupiedReservations(
-            @RequestParam LocalDate date
-    ) {
-
-        List<Reservation> reservations =
-                reservationService.getReservationsByClient(date != null ? 0L : null);
-
-        // ⚠️ Mejor práctica: aquí deberías crear un método en ReservationService:
-        // getReservationsByDate(date)
-        // pero lo dejo listo como mejora arquitectónica
-
-        return ResponseEntity.ok(reservations);
-    }
+//    @GetMapping(path = "/occupied")
+//    public ResponseEntity<List<Reservation>> getOccupiedReservations(
+//            @RequestParam LocalDate date
+//    ) {
+//
+//        List<Reservation> reservations =
+//                reservationService.getReservationsByClient(date != null ? 0L : null);
+//        return ResponseEntity.ok(reservations);
+//    }
 }

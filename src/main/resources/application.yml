@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: nails
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: 7000
+  servlet:
+    context-path: /nails
+
+application:
+  jwt:
+    secret: ${JWT_SECRET}
+
+logging:
+  level:
+    org.hibernate.SQL: debug
