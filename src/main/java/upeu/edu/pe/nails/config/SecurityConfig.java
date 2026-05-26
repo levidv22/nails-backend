@@ -35,6 +35,7 @@ public class SecurityConfig {
     ) throws Exception {
 
         http
+                .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
 
                 .sessionManagement(session ->
@@ -45,7 +46,9 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
 
-                        // PUBLICAS
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // 1. RUTAS PÚBLICAS
                         .requestMatchers(
                                 "/api/auth/**"
                         ).permitAll()
@@ -58,53 +61,24 @@ public class SecurityConfig {
                                 "/api/availability/**"
                         ).permitAll()
 
-                        // SERVICIOS SOLO ADMIN
+                        // 2. SERVICIOS (SOLO ADMIN)
                         .requestMatchers(
-                                HttpMethod.POST,
-                                "/api/servi/**"
+                                HttpMethod.POST, "/api/servi/**"
+                        ).hasRole("ADMIN")
+                        .requestMatchers(
+                                HttpMethod.PUT, "/api/servi/**"
+                        ).hasRole("ADMIN")
+                        .requestMatchers(
+                                HttpMethod.DELETE, "/api/servi/**"
                         ).hasRole("ADMIN")
 
-                        .requestMatchers(
-                                HttpMethod.PUT,
-                                "/api/servi/**"
-                        ).hasRole("ADMIN")
-
-                        .requestMatchers(
-                                HttpMethod.DELETE,
-                                "/api/servi/**"
-                        ).hasRole("ADMIN")
-
-                        // DASHBOARD Y HORARIOS
+                        // 3. DASHBOARD Y HORARIOS (SOLO ADMIN)
                         .requestMatchers(
                                 "/api/dashboard/**",
                                 "/api/schedules/**"
                         ).hasRole("ADMIN")
 
-                        // RESERVAS
-                        .requestMatchers(
-                                "/api/reservations/**"
-                        ).hasAnyRole(
-                                "ADMIN",
-                                "CLIENT"
-                        )
-
-                        // REVIEWS
-                        .requestMatchers(
-                                "/api/reviews/**"
-                        ).hasAnyRole(
-                                "ADMIN",
-                                "CLIENT"
-                        )
-
-                        // USERS
-                        .requestMatchers(
-                                "/api/users/**"
-                        ).hasAnyRole(
-                                "ADMIN",
-                                "CLIENT"
-                        )
-
-                        // SOLO ADMIN
+                        // 4. ENDPOINTS ESPECÍFICOS DE RESERVAS PARA ADMIN (Debe ir ANTES del genérico /**)
                         .requestMatchers(
                                 "/api/reservations/approve/**",
                                 "/api/reservations/reject/**",
@@ -112,9 +86,11 @@ public class SecurityConfig {
                                 "/api/reservations/pending"
                         ).hasRole("ADMIN")
 
-                        // CLIENT Y ADMIN
+                        // 5. ENDPOINTS GENÉRICOS (ADMIN Y CLIENT)
                         .requestMatchers(
-                                "/api/reservations/**"
+                                "/api/reservations/**",
+                                "/api/reviews/**",
+                                "/api/users/**"
                         ).hasAnyRole("ADMIN", "CLIENT")
 
                         .anyRequest()

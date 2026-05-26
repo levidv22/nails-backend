@@ -8,12 +8,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import upeu.edu.pe.nails.token.TokenBlacklistService;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Collections;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -42,24 +43,40 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = authHeader.substring(7);
 
-        // Si el token está en la lista negra, denegar acceso
         if (blacklistService.isTokenBlacklisted(token) || !jwtService.validateToken(token)) {
-            filterChain.doFilter(request, response);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\": \"Token invalido o expirado\"}");
             return;
         }
 
-        Claims claims = jwtService.extractClaims(token);
-        String email = claims.getSubject();
-        String role = claims.get("role", String.class);
+        try {
+            Claims claims = jwtService.extractClaims(token);
+            String email = claims.getSubject();
+            String role = claims.get("role", String.class);
 
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(
-                        email,
-                        null,
-                        List.of(new SimpleGrantedAuthority("ROLE_" + role))
+            if (email != null && role != null) {
+                // Asegurar el formato ROLE_CLIENT
+                String authorityName = role.startsWith("ROLE_") ? role : "ROLE_" + role;
+                SimpleGrantedAuthority authority = new SimpleGrantedAuthority(authorityName);
+
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(
+                                email,
+                                null,
+                                Collections.singletonList(authority)
+                        );
+
+                authentication.setDetails(
+                        new WebAuthenticationDetailsSource().buildDetails(request)
                 );
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
+        } catch (Exception e) {
+            SecurityContextHolder.clearContext();
+        }
+
         filterChain.doFilter(request, response);
     }
 }
